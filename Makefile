@@ -11,7 +11,7 @@ OBJS = $(patsubst src/%.c,obj/%.o,$(wildcard src/*.c))
 all: $(TARGET)
 
 clean:
-	rm -f  $(TARGET) 
+	rm -f  $(TARGET) && rm -rf $(OBJS)
 
 obj/%.o: src/%.c include/%.h
 	$(CC) $(CCFLAGS) -c $< -o $@
