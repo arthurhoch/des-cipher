@@ -2,7 +2,7 @@ TARGET = des
 INCLUDE_DIR = -I include
 
 CC=gcc
-CCFLAGS += -march=core-avx-i -O2 -pipe -Wall $(INCLUDE_DIR)
+CCFLAGS += -march=native -O2 -pipe -Wall $(INCLUDE_DIR)
 LFLAGS += -lpthread -ldl -Wl,--export-dynamic
 OBJS = $(patsubst src/%.c,obj/%.o,$(wildcard src/*.c))
 

@@ -1,22 +1,34 @@
 #include <stdio.h>
 #include "block.h"
 
-void nt_bits(block b);
+typedef struct printf_block32
+{
+    void (*bits)(const block32 b);
+    void (*nibbles_d)(const block32 b);
+    void (*nibbles_h)(const block32 b);
+    void (*bytes_d)(const block32 b);
+    void (*bytes_h)(const block32 b);
+    void (*words_d)(const block32 b);
+    void (*words_h)(const block32 b);
+    void (*doubleWord_d)(const block32 b);
+    void (*doubleWord_h)(const block32 b);
+    void (*all)(const block32 b);
+} printf_block32;
 
-// https://stackoverflow.com/questions/17052443/c-function-inside-struct
+printf_block32 init_printf_block32();
 
-// typedef struct client_ops_t client_ops_t;
-// typedef struct client_t client_t, *pno;
+void all(const block32 b);
 
-// struct client_t {
-//     /* ... */
-//     client_ops_t *ops;
-// };
+void bits(const block32 b);
 
-// struct client_ops_t {
-//     pno (*AddClient)(client_t *);
-//     pno (*RemoveClient)(client_t *);
-// };
+void nibbles_d(const block32 b);
+void nibbles_h(const block32 b);
 
-// pno AddClient (client_t *client) { return client->ops->AddClient(client); }
-// pno RemoveClient (client_t *client) { return client->ops->RemoveClient(client); }
+void bytes_d(const block32 b);
+void bytes_h(const block32 b);
+
+void words_d(const block32 b);
+void words_h(const block32 b);
+
+void doubleWord_d(const block32 b);
+void doubleWord_h(const block32 b);
