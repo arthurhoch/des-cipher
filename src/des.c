@@ -1,6 +1,44 @@
 #include "des.h"
 #include "printf_block.h"
 
+block32 permutationP(block32 in)
+{
+    block32 out;
+    out.bit._31 = in.bit._24;
+    out.bit._30 = in.bit._3;
+    out.bit._29 = in.bit._10;
+    out.bit._28 = in.bit._21;
+    out.bit._27 = in.bit._5;
+    out.bit._26 = in.bit._29;
+    out.bit._25 = in.bit._12;
+    out.bit._24 = in.bit._18;
+    out.bit._23 = in.bit._8;
+    out.bit._22 = in.bit._2;
+    out.bit._21 = in.bit._26;
+    out.bit._20 = in.bit._31;
+    out.bit._19 = in.bit._13;
+    out.bit._18 = in.bit._23;
+    out.bit._17 = in.bit._7;
+    out.bit._16 = in.bit._1;
+    out.bit._15 = in.bit._9;
+    out.bit._14 = in.bit._30;
+    out.bit._13 = in.bit._17;
+    out.bit._12 = in.bit._4;
+    out.bit._11 = in.bit._25;
+    out.bit._10 = in.bit._22;
+    out.bit._9 = in.bit._14;
+    out.bit._8 = in.bit._0;
+    out.bit._7 = in.bit._16;
+    out.bit._6 = in.bit._27;
+    out.bit._5 = in.bit._11;
+    out.bit._4 = in.bit._28;
+    out.bit._3 = in.bit._20;
+    out.bit._2 = in.bit._19;
+    out.bit._1 = in.bit._6;
+    out.bit._0 = in.bit._15;
+    return out;
+}
+
 int S1[] = {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
             0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
             4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0,
@@ -39,8 +77,6 @@ int boxS2(block64 box)
     col.bit._30 = box.bit._9;
     col.bit._31 = box.bit._10;
     row.bit._31 = box.bit._11;
-
-    printf("%u %u \n", col.doubleWord, row.doubleWord);
 
     return S2[(row.doubleWord * 16) + col.doubleWord];
 }
@@ -386,6 +422,76 @@ block64 ip_permutation(block64 in)
     return out;
 }
 
+block64 ip_permutation_after(block64 in)
+{
+    block64 out;
+    out.bit._63 = in.bit._24;
+    out.bit._62 = in.bit._56;
+    out.bit._61 = in.bit._16;
+    out.bit._60 = in.bit._48;
+    out.bit._59 = in.bit._8;
+    out.bit._58 = in.bit._40;
+    out.bit._57 = in.bit._0;
+    out.bit._56 = in.bit._32;
+    out.bit._55 = in.bit._25;
+    out.bit._54 = in.bit._57;
+    out.bit._53 = in.bit._17;
+    out.bit._52 = in.bit._49;
+    out.bit._51 = in.bit._9;
+    out.bit._50 = in.bit._41;
+    out.bit._49 = in.bit._1;
+    out.bit._48 = in.bit._33;
+    out.bit._47 = in.bit._26;
+    out.bit._46 = in.bit._58;
+    out.bit._45 = in.bit._18;
+    out.bit._44 = in.bit._50;
+    out.bit._43 = in.bit._10;
+    out.bit._42 = in.bit._42;
+    out.bit._41 = in.bit._2;
+    out.bit._40 = in.bit._34;
+    out.bit._39 = in.bit._27;
+    out.bit._38 = in.bit._59;
+    out.bit._37 = in.bit._19;
+    out.bit._36 = in.bit._51;
+    out.bit._35 = in.bit._11;
+    out.bit._34 = in.bit._43;
+    out.bit._33 = in.bit._3;
+    out.bit._32 = in.bit._35;
+    out.bit._31 = in.bit._28;
+    out.bit._30 = in.bit._60;
+    out.bit._29 = in.bit._20;
+    out.bit._28 = in.bit._52;
+    out.bit._27 = in.bit._12;
+    out.bit._26 = in.bit._44;
+    out.bit._25 = in.bit._4;
+    out.bit._24 = in.bit._36;
+    out.bit._23 = in.bit._29;
+    out.bit._22 = in.bit._61;
+    out.bit._21 = in.bit._21;
+    out.bit._20 = in.bit._53;
+    out.bit._19 = in.bit._13;
+    out.bit._18 = in.bit._45;
+    out.bit._17 = in.bit._5;
+    out.bit._16 = in.bit._37;
+    out.bit._15 = in.bit._30;
+    out.bit._14 = in.bit._62;
+    out.bit._13 = in.bit._22;
+    out.bit._12 = in.bit._54;
+    out.bit._11 = in.bit._14;
+    out.bit._10 = in.bit._46;
+    out.bit._9 = in.bit._6;
+    out.bit._8 = in.bit._38;
+    out.bit._7 = in.bit._31;
+    out.bit._6 = in.bit._63;
+    out.bit._5 = in.bit._23;
+    out.bit._4 = in.bit._55;
+    out.bit._3 = in.bit._15;
+    out.bit._2 = in.bit._47;
+    out.bit._1 = in.bit._7;
+    out.bit._0 = in.bit._39;
+    return out;
+}
+
 block64 e_bit_selection(block32 in)
 {
     block64 out;
@@ -442,70 +548,136 @@ block64 e_bit_selection(block32 in)
 
 //Create subkeys end
 
-int main()
+block64 ecryption()
 {
     printf_block32 pb32 = init_printf_block32();
 
     block64 key;
     block64 subkeys[16];
 
+    //Senha
     key.quadword = 0x133457799bbcdff1;
     key_permutation(key, subkeys);
     //subkeys[i] 48 bits 0 - 47
 
     //crypt 64 bits
     block64 in, ip;
+    //Mensagem
     in.quadword = 0x123456789ABCDEF;
+
+    // pb32.bits(in.doubleWord._0);
+    // pb32.bits(in.doubleWord._1);
+
     ip = ip_permutation(in);
-    block32 l = ip.doubleWord._0;
-    block32 r = ip.doubleWord._1;
+
+    block32 l[16];
+    block32 r[16];
+
+    l[0] = ip.doubleWord._0;
+    r[0] = ip.doubleWord._1;
     // pb32.bits(l);
     // pb32.bits(r);
 
     //n - 16
     block64 result_e;
-    result_e.quadword = 0x0;
-    result_e = e_bit_selection(r);
-
-    // pb32.bits(result_e.doubleWord._0);
-    // pb32.bits(result_e.doubleWord._1);
-
-    block64 tmp = subkeys[1];
-    block64 keyXORebit;
-    keyXORebit.quadword = result_e.quadword ^ subkeys[1].quadword;
-
-    pb32.bits(keyXORebit.doubleWord._0);
-    pb32.bits(keyXORebit.doubleWord._1);
-
-
     block32 afterBox;
-    afterBox.nibble._7 = boxS8(keyXORebit);
-    afterBox.nibble._6 = boxS7(keyXORebit);
-    afterBox.nibble._5 = boxS6(keyXORebit);
-    afterBox.nibble._4 = boxS5(keyXORebit);
-    afterBox.nibble._3 = boxS4(keyXORebit);
-    afterBox.nibble._2 = boxS3(keyXORebit);
-    afterBox.nibble._1 = boxS2(keyXORebit);
-    afterBox.nibble._0 = boxS1(keyXORebit);
+    for (int i = 0; i < 16; i++)
+    {
+        result_e.quadword = 0x0;
+        result_e = e_bit_selection(r[i]);
 
-    // permutacao P
+        block64 keyXORebit;
+        keyXORebit.quadword = result_e.quadword ^ subkeys[i + 1].quadword;
 
-    pb32.bits(afterBox);
-    // pb32.bits(keyXORebit.doubleWord._1);
+    
 
-    // int teste = boxS1(keyXORebit);
-    // printf("%d \n", teste);
-    // boxS1(keyXORebit);
+        afterBox.nibble._7 = boxS8(keyXORebit);
+        afterBox.nibble._6 = boxS7(keyXORebit);
+        afterBox.nibble._5 = boxS6(keyXORebit);
+        afterBox.nibble._4 = boxS5(keyXORebit);
+        afterBox.nibble._3 = boxS4(keyXORebit);
+        afterBox.nibble._2 = boxS3(keyXORebit);
+        afterBox.nibble._1 = boxS2(keyXORebit);
+        afterBox.nibble._0 = boxS1(keyXORebit);
 
-    // printf_block32 pb = init_printf_block32();
-    // block32 b, baux;
+        afterBox = permutationP(afterBox);
+        // pb32.bits(l[i+1]);
+        l[i + 1].doubleWord = r[i].doubleWord;
+        r[i + 1].doubleWord = l[i].doubleWord ^ afterBox.doubleWord;
+        // printf("%d - ", i);
+    }
+    block64 afterInteration;
+    afterInteration.doubleWord._0 = r[16];
+    afterInteration.doubleWord._1 = l[16];
+    afterInteration = ip_permutation_after(afterInteration);
 
-    // block64 b64;
-    // printf("%ld\n", sizeof(b));
-    // printf("%ld\n", sizeof(b64));
+    // pb32.bits(afterInteration.doubleWord._0);
+    // pb32.bits(afterInteration.doubleWord._1);
 
-    // baux.doubleWord = 0x0;
-    // b.doubleWord = 0xFFFF2FFF;
-    // pb.bits(b);
-    // pb.bits(baux);
+    return afterInteration;
+}
+
+block64 decryption(block64 encrypted)
+{
+    printf_block32 pb32 = init_printf_block32();
+    block64 key;
+    block64 subkeys[16];
+
+    //Senha
+    key.quadword = 0x133457799bbcdff1;
+    key_permutation(key, subkeys);
+
+    block32 l[16];
+    block32 r[16];
+
+    encrypted = ip_permutation(encrypted);
+
+    l[0] = encrypted.doubleWord._0;
+    r[0] = encrypted.doubleWord._1;
+
+    block64 result_e;
+    block32 afterBox;
+    int count = 16;
+    for (int i = 0; i < 16; i++)
+    {
+        result_e.quadword = 0x0;
+        result_e = e_bit_selection(r[i]);
+
+        block64 keyXORebit;
+        keyXORebit.quadword = result_e.quadword ^ subkeys[count - i].quadword;
+
+        // pb32.bits(keyXORebit.doubleWord._0);
+        // pb32.bits(keyXORebit.doubleWord._1);
+
+        afterBox.nibble._7 = boxS8(keyXORebit);
+        afterBox.nibble._6 = boxS7(keyXORebit);
+        afterBox.nibble._5 = boxS6(keyXORebit);
+        afterBox.nibble._4 = boxS5(keyXORebit);
+        afterBox.nibble._3 = boxS4(keyXORebit);
+        afterBox.nibble._2 = boxS3(keyXORebit);
+        afterBox.nibble._1 = boxS2(keyXORebit);
+        afterBox.nibble._0 = boxS1(keyXORebit);
+
+        afterBox = permutationP(afterBox);
+        // pb32.bits(l[i+1]);
+        l[i + 1].doubleWord = r[i].doubleWord;
+        r[i + 1].doubleWord = l[i].doubleWord ^ afterBox.doubleWord;
+        // printf("%d - ", i);
+    }
+    block64 afterInteration;
+    afterInteration.doubleWord._0 = r[16];
+    afterInteration.doubleWord._1 = l[16];
+    afterInteration = ip_permutation_after(afterInteration);
+
+    pb32.bits(afterInteration.doubleWord._0);
+    pb32.bits(afterInteration.doubleWord._1);
+}
+
+int main()
+{
+    printf_block32 pb32 = init_printf_block32();
+    block64 encrypted = ecryption();
+    pb32.bits(encrypted.doubleWord._0);
+    pb32.bits(encrypted.doubleWord._1);
+    decryption(encrypted);
 }
