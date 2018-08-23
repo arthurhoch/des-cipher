@@ -568,8 +568,8 @@ block64 ecryption()
     pb32.bits(in.doubleWord._0);
     pb32.bits(in.doubleWord._1);
 
-    //ip = ip_permutation(in);
-    ip = in;
+    ip = ip_permutation(in);
+    //ip = in;
 
     block32 l[16];
     block32 r[16];
@@ -610,7 +610,7 @@ block64 ecryption()
     block64 afterInteration;
     afterInteration.doubleWord._0 = r[16];
     afterInteration.doubleWord._1 = l[16];
-    //afterInteration = ip_permutation_after(afterInteration);
+    afterInteration = ip_permutation_after(afterInteration);
 
     // pb32.bits(afterInteration.doubleWord._0);
     // pb32.bits(afterInteration.doubleWord._1);
@@ -631,6 +631,8 @@ block64 decryption(block64 encrypted)
     block32 l[16];
     block32 r[16];
 
+
+    encrypted  = ip_permutation_back(encrypted);
 
     l[0] = encrypted.doubleWord._0;
     r[0] = encrypted.doubleWord._1;
@@ -667,8 +669,7 @@ block64 decryption(block64 encrypted)
     block64 afterInteration;
     afterInteration.doubleWord._0 = r[16];
     afterInteration.doubleWord._1 = l[16];
-    //afterInteration = ip_permutation_after(afterInteration);
-    //afterInteration = ip_permutation(afterInteration);
+    afterInteration = ip_permutation_after_back(afterInteration);
 
     pb32.bits(afterInteration.doubleWord._0);
     pb32.bits(afterInteration.doubleWord._1);
