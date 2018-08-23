@@ -422,6 +422,76 @@ block64 ip_permutation(block64 in)
     return out;
 }
 
+block64 ip_permutation_back(block64 in)
+{
+    block64 out;
+    out.bit._6 = in.bit._63;
+    out.bit._14 = in.bit._62;
+    out.bit._22 = in.bit._61;
+    out.bit._30 = in.bit._60;
+    out.bit._38 = in.bit._59;
+    out.bit._46 = in.bit._58;
+    out.bit._54 = in.bit._57;
+    out.bit._62 = in.bit._56;
+    out.bit._4 = in.bit._55;
+    out.bit._12 = in.bit._54;
+    out.bit._20 = in.bit._53;
+    out.bit._28 = in.bit._52;
+    out.bit._36 = in.bit._51;
+    out.bit._44 = in.bit._50;
+    out.bit._52 = in.bit._49;
+    out.bit._61 = in.bit._48;
+    out.bit._2 = in.bit._47;
+    out.bit._10 = in.bit._46;
+    out.bit._18 = in.bit._45;
+    out.bit._26 = in.bit._44;
+    out.bit._34 = in.bit._43;
+    out.bit._42 = in.bit._42;
+    out.bit._50 = in.bit._41;
+    out.bit._58 = in.bit._40;
+    out.bit._0 = in.bit._39;
+    out.bit._8 = in.bit._38;
+    out.bit._16 = in.bit._37;
+    out.bit._24 = in.bit._36;
+    out.bit._32 = in.bit._35;
+    out.bit._40 = in.bit._34;
+    out.bit._48 = in.bit._33;
+    out.bit._56 = in.bit._32;
+    out.bit._7 = in.bit._31;
+    out.bit._15 = in.bit._30;
+    out.bit._23 = in.bit._29;
+    out.bit._31 = in.bit._28;
+    out.bit._39 = in.bit._27;
+    out.bit._47 = in.bit._26;
+    out.bit._55 = in.bit._25;
+    out.bit._63 = in.bit._24;
+    out.bit._5 = in.bit._23;
+    out.bit._13 = in.bit._22;
+    out.bit._21 = in.bit._21;
+    out.bit._29 = in.bit._20;
+    out.bit._37 = in.bit._19;
+    out.bit._45 = in.bit._18;
+    out.bit._53 = in.bit._17;
+    out.bit._61 = in.bit._16;
+    out.bit._3 = in.bit._15;
+    out.bit._11 = in.bit._14;
+    out.bit._19 = in.bit._13;
+    out.bit._27 = in.bit._12;
+    out.bit._35 = in.bit._11;
+    out.bit._43 = in.bit._10;
+    out.bit._51 = in.bit._9;
+    out.bit._59 = in.bit._8;
+    out.bit._1 = in.bit._7;
+    out.bit._9 = in.bit._6;
+    out.bit._17 = in.bit._5;
+    out.bit._25 = in.bit._4;
+    out.bit._33 = in.bit._3;
+    out.bit._41 = in.bit._2;
+    out.bit._49 = in.bit._1;
+    out.bit._57 = in.bit._0;
+    return out;
+}
+
 block64 ip_permutation_after(block64 in)
 {
     block64 out;
@@ -489,6 +559,76 @@ block64 ip_permutation_after(block64 in)
     out.bit._2 = in.bit._47;
     out.bit._1 = in.bit._7;
     out.bit._0 = in.bit._39;
+    return out;
+}
+
+block64 ip_permutation_after_back(block64 in)
+{
+    block64 out;
+    out.bit._24 = in.bit._63;
+    out.bit._56 = in.bit._62;
+    out.bit._16 = in.bit._61;
+    out.bit._48 = in.bit._60;
+    out.bit._8 = in.bit._59;
+    out.bit._40 = in.bit._58;
+    out.bit._0 = in.bit._57;
+    out.bit._32 = in.bit._56;
+    out.bit._25 = in.bit._55;
+    out.bit._57 = in.bit._54;
+    out.bit._17 = in.bit._53;
+    out.bit._49 = in.bit._52;
+    out.bit._9 = in.bit._51;
+    out.bit._41 = in.bit._50;
+    out.bit._1 = in.bit._49;
+    out.bit._33 = in.bit._48;
+    out.bit._26 = in.bit._47;
+    out.bit._58 = in.bit._46;
+    out.bit._18 = in.bit._45;
+    out.bit._50 = in.bit._44;
+    out.bit._10 = in.bit._43;
+    out.bit._42 = in.bit._42;
+    out.bit._2 = in.bit._41;
+    out.bit._34 = in.bit._40;
+    out.bit._27 = in.bit._39;
+    out.bit._59 = in.bit._38;
+    out.bit._19 = in.bit._37;
+    out.bit._51 = in.bit._36;
+    out.bit._11 = in.bit._35;
+    out.bit._43 = in.bit._34;
+    out.bit._3 = in.bit._33;
+    out.bit._35 = in.bit._32;
+    out.bit._28 = in.bit._31;
+    out.bit._60 = in.bit._30;
+    out.bit._20 = in.bit._29;
+    out.bit._52 = in.bit._28;
+    out.bit._12 = in.bit._27;
+    out.bit._44 = in.bit._26;
+    out.bit._4 = in.bit._25;
+    out.bit._36 = in.bit._24;
+    out.bit._29 = in.bit._23;
+    out.bit._61 = in.bit._22;
+    out.bit._21 = in.bit._21;
+    out.bit._53 = in.bit._20;
+    out.bit._13 = in.bit._19;
+    out.bit._45 = in.bit._18;
+    out.bit._5 = in.bit._17;
+    out.bit._37 = in.bit._16;
+    out.bit._30 = in.bit._15;
+    out.bit._62 = in.bit._14;
+    out.bit._22 = in.bit._13;
+    out.bit._54 = in.bit._12;
+    out.bit._14 = in.bit._11;
+    out.bit._46 = in.bit._10;
+    out.bit._6 = in.bit._9;
+    out.bit._38 = in.bit._8;
+    out.bit._31 = in.bit._7;
+    out.bit._63 = in.bit._6;
+    out.bit._23 = in.bit._5;
+    out.bit._55 = in.bit._4;
+    out.bit._15 = in.bit._3;
+    out.bit._47 = in.bit._2;
+    out.bit._7 = in.bit._1;
+    out.bit._39 = in.bit._0;
     return out;
 }
 
