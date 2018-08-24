@@ -688,38 +688,20 @@ block64 e_bit_selection(block32 in)
 
 //Create subkeys end
 
-block64 ecryption()
+block64 encryption(block64 in, block64 key)
 {
-    printf_block32 pb32 = init_printf_block32();
-
-    block64 key;
+    block64 ip;
     block64 subkeys[16];
 
-    //Senha
-    key.quadword = 0x133457799bbcdff1;
     key_permutation(key, subkeys);
-    //subkeys[i] 48 bits 0 - 47
-
-    //crypt 64 bits
-    block64 in, ip;
-    //Mensagem
-    in.quadword = 0x123456789ABCDEF;
-
-    pb32.bits(in.doubleWord._0);
-    pb32.bits(in.doubleWord._1);
-
     ip = ip_permutation(in);
-    //ip = in;
 
     block32 l[16];
     block32 r[16];
 
     l[0] = ip.doubleWord._0;
     r[0] = ip.doubleWord._1;
-    // pb32.bits(l);
-    // pb32.bits(r);
 
-    //n - 16
     block64 result_e;
     block32 afterBox;
     for (int i = 0; i < 16; i++)
@@ -729,8 +711,6 @@ block64 ecryption()
 
         block64 keyXORebit;
         keyXORebit.quadword = result_e.quadword ^ subkeys[i + 1].quadword;
-
-    
 
         afterBox.nibble._7 = boxS8(keyXORebit);
         afterBox.nibble._6 = boxS7(keyXORebit);
@@ -742,37 +722,26 @@ block64 ecryption()
         afterBox.nibble._0 = boxS1(keyXORebit);
 
         afterBox = permutationP(afterBox);
-        // pb32.bits(l[i+1]);
         l[i + 1].doubleWord = r[i].doubleWord;
         r[i + 1].doubleWord = l[i].doubleWord ^ afterBox.doubleWord;
-        // printf("%d - ", i);
     }
     block64 afterInteration;
     afterInteration.doubleWord._0 = r[16];
     afterInteration.doubleWord._1 = l[16];
     afterInteration = ip_permutation_after(afterInteration);
 
-    // pb32.bits(afterInteration.doubleWord._0);
-    // pb32.bits(afterInteration.doubleWord._1);
-
     return afterInteration;
 }
 
-block64 decryption(block64 encrypted)
+block64 decryption(block64 encrypted, block64 key)
 {
-    printf_block32 pb32 = init_printf_block32();
-    block64 key;
     block64 subkeys[16];
-
-    //Senha
-    key.quadword = 0x133457799bbcdff1;
     key_permutation(key, subkeys);
 
     block32 l[16];
     block32 r[16];
 
-
-    encrypted  = ip_permutation_after_back(encrypted);
+    encrypted = ip_permutation_after_back(encrypted);
 
     l[0] = encrypted.doubleWord._0;
     r[0] = encrypted.doubleWord._1;
@@ -788,9 +757,6 @@ block64 decryption(block64 encrypted)
         block64 keyXORebit;
         keyXORebit.quadword = result_e.quadword ^ subkeys[count - i].quadword;
 
-        // pb32.bits(keyXORebit.doubleWord._0);
-        // pb32.bits(keyXORebit.doubleWord._1);
-
         afterBox.nibble._7 = boxS8(keyXORebit);
         afterBox.nibble._6 = boxS7(keyXORebit);
         afterBox.nibble._5 = boxS6(keyXORebit);
@@ -801,25 +767,175 @@ block64 decryption(block64 encrypted)
         afterBox.nibble._0 = boxS1(keyXORebit);
 
         afterBox = permutationP(afterBox);
-        // pb32.bits(l[i+1]);
         l[i + 1].doubleWord = r[i].doubleWord;
         r[i + 1].doubleWord = l[i].doubleWord ^ afterBox.doubleWord;
-        // printf("%d - ", i);
     }
     block64 afterInteration;
     afterInteration.doubleWord._0 = r[16];
     afterInteration.doubleWord._1 = l[16];
     afterInteration = ip_permutation_back(afterInteration);
 
-    pb32.bits(afterInteration.doubleWord._0);
-    pb32.bits(afterInteration.doubleWord._1);
+    return afterInteration;
+}
+
+void teste()
+{
+    printf_block32 pb32 = init_printf_block32();
+    block64 key;
+    block64 in;
+    block64 out;
+
+    int modo = DECRYPT;
+    key.quadword = 0x133457799bbcdff1;
+    // key.quadword = 0x85E813540F0AB405;
+
+    if ((modo == ENCRYPT))
+    {
+
+        in.quadword = 0x123456789ABCDEF;
+        out = encryption(in, key);
+    }
+    else
+    {
+
+        in.quadword = 0x85E813540F0AB405;
+        out = decryption(in, key);
+    }
+
+    pb32.bits(out.doubleWord._0);
+    pb32.bits(out.doubleWord._1);
+}
+
+block64 readFile1()
+{
+    block64 out;
+    FILE *fp;
+    char buff[9];
+    fp = fopen("/mnt/c/Users/Arthur/Documents/des/test_entrada.txt", "r");
+
+    if (fp == NULL)
+        perror("Error opening file");
+    else
+    {
+        fgets(buff, 9, fp);
+        fclose(fp);
+    }
+
+    out.byte._0 = buff[0];
+    out.byte._1 = buff[1];
+    out.byte._2 = buff[2];
+    out.byte._3 = buff[3];
+    out.byte._4 = buff[4];
+    out.byte._5 = buff[5];
+    out.byte._6 = buff[6];
+    out.byte._7 = buff[7];
+    return out;
+}
+
+block64 readFile3()
+{
+    block64 out;
+    FILE *fp;
+    char buff[9];
+    fp = fopen("/mnt/c/Users/Arthur/Documents/des/saida.des", "r");
+
+    if (fp == NULL)
+        perror("Error opening file");
+    else
+    {
+        fgets(buff, 9, fp);
+        fclose(fp);
+    }
+
+    out.byte._0 = buff[0];
+    out.byte._1 = buff[1];
+    out.byte._2 = buff[2];
+    out.byte._3 = buff[3];
+    out.byte._4 = buff[4];
+    out.byte._5 = buff[5];
+    out.byte._6 = buff[6];
+    out.byte._7 = buff[7];
+    return out;
+}
+
+void writeFile2(block64 in)
+{
+    FILE *fp;
+    char buff[8];
+
+    buff[0] = in.byte._0;
+    buff[1] = in.byte._1;
+    buff[2] = in.byte._2;
+    buff[3] = in.byte._3;
+    buff[4] = in.byte._4;
+    buff[5] = in.byte._5;
+    buff[6] = in.byte._6;
+    buff[7] = in.byte._7;
+
+    fp = fopen("/mnt/c/Users/Arthur/Documents/des/saida.des", "wb");
+    fwrite(buff, sizeof(char), sizeof(buff), fp);
+    fclose(fp);
+}
+
+void writeFile4(block64 in)
+{
+    FILE *fp;
+    char buff[8];
+
+    buff[0] = in.byte._0;
+    buff[1] = in.byte._1;
+    buff[2] = in.byte._2;
+    buff[3] = in.byte._3;
+    buff[4] = in.byte._4;
+    buff[5] = in.byte._5;
+    buff[6] = in.byte._6;
+    buff[7] = in.byte._7;
+
+    fp = fopen("/mnt/c/Users/Arthur/Documents/des/saida.txt", "wb");
+    fwrite(buff, sizeof(char), sizeof(buff), fp);
+    fclose(fp);
 }
 
 int main()
 {
-    printf_block32 pb32 = init_printf_block32();
-    block64 encrypted = ecryption();
-    pb32.bits(encrypted.doubleWord._0);
-    pb32.bits(encrypted.doubleWord._1);
-    decryption(encrypted);
+    // printf_block32 pb32 = init_printf_block32();
+    block64 key;
+    block64 in;
+    block64 out;
+
+    key.quadword = 0x133457799bbcdff1;
+
+    // printf("Primeira entrada:\n");
+    in = readFile1();
+    // pb32.bits(in.doubleWord._0);
+    // pb32.bits(in.doubleWord._1);
+    // printf("------------------------------------------------\n");
+
+    // key.quadword = 0x133457799bbcdff1;
+
+    // printf("Encrypted:\n");
+    in = encryption(in, key);
+    // pb32.bits(in.doubleWord._0);
+    // pb32.bits(in.doubleWord._1);
+    // printf("------------------------------------------------\n");
+    writeFile2(in);
+
+    // key.quadword = 0x133457799bbcdff1;
+
+    // printf("Segunda entrada:\n");
+    in = readFile3();
+    // pb32.bits(in.doubleWord._0);
+    // pb32.bits(in.doubleWord._1);
+    // printf("------------------------------------------------\n");
+
+    // key.quadword = 0x133457799bbcdff1;
+
+    // printf("Decrypted:\n");
+    in = decryption(in, key);
+    // pb32.bits(in.doubleWord._0);
+    // pb32.bits(in.doubleWord._1);
+    // printf("------------------------------------------------\n");
+    writeFile4(in);
+
+    return 0;
 }
