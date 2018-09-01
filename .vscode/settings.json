@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "printf_block.h": "c"
+        "printf_block.h": "c",
+        "des.h": "c"
     }
 }

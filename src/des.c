@@ -1,6 +1,16 @@
 #include "des.h"
 #include "printf_block.h"
 
+pthread_mutex_t lock;
+
+block64 key;
+
+char *in_file;
+char *out_file;
+block64 subkeys[16];
+
+static int bufferSize = 32768;
+
 block32 permutationP(block32 in)
 {
     block32 out;
@@ -370,7 +380,7 @@ block64 ip_permutation(block64 in)
     out.bit._51 = in.bit._36;
     out.bit._50 = in.bit._44;
     out.bit._49 = in.bit._52;
-    out.bit._48 = in.bit._61;
+    out.bit._48 = in.bit._60;
     out.bit._47 = in.bit._2;
     out.bit._46 = in.bit._10;
     out.bit._45 = in.bit._18;
@@ -440,7 +450,7 @@ block64 ip_permutation_back(block64 in)
     out.bit._36 = in.bit._51;
     out.bit._44 = in.bit._50;
     out.bit._52 = in.bit._49;
-    out.bit._61 = in.bit._48;
+    out.bit._60 = in.bit._48;
     out.bit._2 = in.bit._47;
     out.bit._10 = in.bit._46;
     out.bit._18 = in.bit._45;
@@ -691,10 +701,11 @@ block64 e_bit_selection(block32 in)
 block64 encryption(block64 in, block64 key)
 {
     block64 ip;
-    block64 subkeys[16];
+    
 
-    key_permutation(key, subkeys);
-    ip = ip_permutation(in);
+    
+    //ip = ip_permutation(in);
+    ip = in;
 
     block32 l[16];
     block32 r[16];
@@ -773,169 +784,132 @@ block64 decryption(block64 encrypted, block64 key)
     block64 afterInteration;
     afterInteration.doubleWord._0 = r[16];
     afterInteration.doubleWord._1 = l[16];
-    afterInteration = ip_permutation_back(afterInteration);
+    //afterInteration = ip_permutation_back(afterInteration);
 
     return afterInteration;
 }
 
-void teste()
-{
-    printf_block32 pb32 = init_printf_block32();
-    block64 key;
-    block64 in;
-    block64 out;
-
-    int modo = DECRYPT;
-    key.quadword = 0x133457799bbcdff1;
-    // key.quadword = 0x85E813540F0AB405;
-
-    if ((modo == ENCRYPT))
-    {
-
-        in.quadword = 0x123456789ABCDEF;
-        out = encryption(in, key);
-    }
-    else
-    {
-
-        in.quadword = 0x85E813540F0AB405;
-        out = decryption(in, key);
-    }
-
-    pb32.bits(out.doubleWord._0);
-    pb32.bits(out.doubleWord._1);
-}
-
-block64 readFile1()
+void thread_decryption(void *buf)
 {
     block64 out;
-    FILE *fp;
-    char buff[9];
-    fp = fopen("/mnt/c/Users/Arthur/Documents/des/test_entrada.txt", "r");
-
-    if (fp == NULL)
-        perror("Error opening file");
-    else
-    {
-        fgets(buff, 9, fp);
-        fclose(fp);
-    }
-
-    out.byte._0 = buff[0];
-    out.byte._1 = buff[1];
-    out.byte._2 = buff[2];
-    out.byte._3 = buff[3];
-    out.byte._4 = buff[4];
-    out.byte._5 = buff[5];
-    out.byte._6 = buff[6];
-    out.byte._7 = buff[7];
-    return out;
+    block64 *in = (block64 *)buf;
+    out = *in;
+    out = decryption(out, key);
+    out = decryption(out, key);
+    out = decryption(out, key);
+    thread_write(out);
 }
 
-block64 readFile3()
+void thread_encryption(void *buf)
 {
     block64 out;
-    FILE *fp;
-    char buff[9];
-    fp = fopen("/mnt/c/Users/Arthur/Documents/des/saida.des", "r");
-
-    if (fp == NULL)
-        perror("Error opening file");
-    else
-    {
-        fgets(buff, 9, fp);
-        fclose(fp);
-    }
-
-    out.byte._0 = buff[0];
-    out.byte._1 = buff[1];
-    out.byte._2 = buff[2];
-    out.byte._3 = buff[3];
-    out.byte._4 = buff[4];
-    out.byte._5 = buff[5];
-    out.byte._6 = buff[6];
-    out.byte._7 = buff[7];
-    return out;
+    block64 *in = (block64 *)buf;
+    out = *in;
+    out = encryption(out, key);
+    out = encryption(out, key);
+    out = encryption(out, key);
+    thread_write(out);
 }
 
-void writeFile2(block64 in)
+void thread_write(block64 block)
 {
-    FILE *fp;
-    char buff[8];
-
-    buff[0] = in.byte._0;
-    buff[1] = in.byte._1;
-    buff[2] = in.byte._2;
-    buff[3] = in.byte._3;
-    buff[4] = in.byte._4;
-    buff[5] = in.byte._5;
-    buff[6] = in.byte._6;
-    buff[7] = in.byte._7;
-
-    fp = fopen("/mnt/c/Users/Arthur/Documents/des/saida.des", "wb");
-    fwrite(buff, sizeof(char), sizeof(buff), fp);
+    pthread_mutex_lock(&lock);
+    FILE *fp = fopen(out_file, "ab");
+    fwrite(&block, 1, sizeof(&block), fp);
+    pthread_mutex_unlock(&lock);
     fclose(fp);
 }
 
-void writeFile4(block64 in)
+void file_decryption()
 {
     FILE *fp;
-    char buff[8];
+    fp = fopen(in_file, "r");
 
-    buff[0] = in.byte._0;
-    buff[1] = in.byte._1;
-    buff[2] = in.byte._2;
-    buff[3] = in.byte._3;
-    buff[4] = in.byte._4;
-    buff[5] = in.byte._5;
-    buff[6] = in.byte._6;
-    buff[7] = in.byte._7;
+    block64 buffer;
+    int threads = 1;
+    pthread_t *thread = calloc(threads, sizeof(pthread_t));
+    buffer.quadword = 0x0;
 
-    fp = fopen("/mnt/c/Users/Arthur/Documents/des/saida.txt", "wb");
-    fwrite(buff, sizeof(char), sizeof(buff), fp);
+    while (fread(&buffer, 1, sizeof(buffer), fp) > 0)
+    {
+        pthread_create(&(thread[threads - 1]), NULL, thread_decryption, (void *)&buffer);
+        pthread_join(thread[threads - 1], NULL);
+        threads++;
+        thread = realloc(thread, threads * sizeof(pthread_t));
+    }
+    fclose(fp);
+
+    buffer = decryption(buffer, key);
+    buffer = decryption(buffer, key);
+    buffer = decryption(buffer, key);
+
+    printf("%u \n", buffer);
+
+    FILE *resize = fopen(out_file, "a+");
+    struct stat st;
+    stat(out_file, &st);
+    off_t fileSize = st.st_size;
+    fileSize = fileSize - buffer.quadword;
+    fseek(fp, -fileSize, SEEK_END);
+    ftruncate(fileno(fp), ftell(fp));
     fclose(fp);
 }
 
-int main()
+void file_encryption()
 {
-    // printf_block32 pb32 = init_printf_block32();
-    block64 key;
-    block64 in;
-    block64 out;
+    
+    FILE *fp;
+    fp = fopen(in_file, "r");
+
+    block64 buffer;
+    int threads = 1;
+    pthread_t *thread = calloc(threads, sizeof(pthread_t));
+    buffer.quadword = 0x0;
+
+    struct stat st;
+    stat(in_file, &st);
+    off_t fileSize = st.st_size;
+
+    while (fread(&buffer, 1, sizeof(buffer), fp) > 0)
+    {
+        pthread_create(&(thread[threads - 1]), NULL, thread_encryption, (void *)&buffer);
+        // pthread_join(thread[threads - 1], NULL);
+        threads++;
+        thread = realloc(thread, threads * sizeof(pthread_t));
+    }
+
+    pthread_exit(NULL);
+    // for (int i = 1; i < threads-1; i++)
+    // {
+    //     //
+    // }
+
+    buffer.quadword = 0x0;
+    buffer.quadword = fileSize;
+    pthread_create(&(thread[threads - 1]), NULL, thread_encryption, (void *)&buffer);
+    pthread_join(thread[threads - 1], NULL);
+    fclose(fp);
+}
+
+int main(int argc, char *argv[])
+{
+    in_file = "./de.zip";
+    out_file = "./e.zip";
+
+    int modo = ENCRYPT;
+    // int modo = DECRYPT;
 
     key.quadword = 0x133457799bbcdff1;
+    key_permutation(key, subkeys);
 
-    // printf("Primeira entrada:\n");
-    in = readFile1();
-    // pb32.bits(in.doubleWord._0);
-    // pb32.bits(in.doubleWord._1);
-    // printf("------------------------------------------------\n");
-
-    // key.quadword = 0x133457799bbcdff1;
-
-    // printf("Encrypted:\n");
-    in = encryption(in, key);
-    // pb32.bits(in.doubleWord._0);
-    // pb32.bits(in.doubleWord._1);
-    // printf("------------------------------------------------\n");
-    writeFile2(in);
-
-    // key.quadword = 0x133457799bbcdff1;
-
-    // printf("Segunda entrada:\n");
-    in = readFile3();
-    // pb32.bits(in.doubleWord._0);
-    // pb32.bits(in.doubleWord._1);
-    // printf("------------------------------------------------\n");
-
-    // key.quadword = 0x133457799bbcdff1;
-
-    // printf("Decrypted:\n");
-    in = decryption(in, key);
-    // pb32.bits(in.doubleWord._0);
-    // pb32.bits(in.doubleWord._1);
-    // printf("------------------------------------------------\n");
-    writeFile4(in);
+    if (modo == ENCRYPT)
+    {
+        file_encryption();
+    }
+    else
+    {
+        file_decryption();
+    }
 
     return 0;
 }
