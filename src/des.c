@@ -1,5 +1,4 @@
 #include "des.h"
-#include "printf_block.h"
 
 pthread_mutex_t lock;
 
@@ -7,7 +6,9 @@ block64 key;
 
 char *in_file;
 char *out_file;
-block64 subkeys[17];
+block64 subkeys[SUBKEYS_LEN];
+
+FILE *fp_out;
 
 // static int bufferSize = 32768;
 
@@ -223,7 +224,7 @@ void key_permutation(block64 key, block64 *key_permutated_final)
 {
     // printf_block32 pb32 = init_printf_block32();
 
-    block64 key_permutated[17];
+    block64 key_permutated[SUBKEYS_LEN];
     // block64 key_permutated_final[16];
 
     key_permutated[0].quadword = 0x0;
@@ -288,7 +289,7 @@ void key_permutation(block64 key, block64 *key_permutated_final)
     // pb32.bits(key_permutated[0].doubleWord._0);
     // pb32.bits(key_permutated[0].doubleWord._1);
 
-    for (int i = 0; i < 17; i++)
+    for (int i = 0; i < SUBKEYS_LEN; i++)
     {
         // printf("%d \n", i);
         if (i != 0)
@@ -702,18 +703,18 @@ block64 encryption(block64 in, block64 key)
 {
     block64 ip;
 
-    //ip = ip_permutation(in);
-    ip = in;
+    ip = ip_permutation(in);
+    // ip = in;
 
-    block32 l[17];
-    block32 r[17];
+    block32 l[SUBKEYS_LEN];
+    block32 r[SUBKEYS_LEN];
 
     l[0] = ip.doubleWord._0;
     r[0] = ip.doubleWord._1;
 
     block64 result_e;
     block32 afterBox;
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < SUBKEYS_LEN-1; i++)
     {
         result_e.quadword = 0x0;
         result_e = e_bit_selection(r[i]);
@@ -735,8 +736,8 @@ block64 encryption(block64 in, block64 key)
         r[i + 1].doubleWord = l[i].doubleWord ^ afterBox.doubleWord;
     }
     block64 afterInteration;
-    afterInteration.doubleWord._0 = r[16];
-    afterInteration.doubleWord._1 = l[16];
+    afterInteration.doubleWord._0 = r[SUBKEYS_LEN-1];
+    afterInteration.doubleWord._1 = l[SUBKEYS_LEN-1];
     afterInteration = ip_permutation_after(afterInteration);
 
     return afterInteration;
@@ -744,11 +745,8 @@ block64 encryption(block64 in, block64 key)
 
 block64 decryption(block64 encrypted, block64 key)
 {
-    block64 subkeys[16];
-    key_permutation(key, subkeys);
-
-    block32 l[17];
-    block32 r[17];
+    block32 l[SUBKEYS_LEN];
+    block32 r[SUBKEYS_LEN];
 
     encrypted = ip_permutation_after_back(encrypted);
 
@@ -757,8 +755,8 @@ block64 decryption(block64 encrypted, block64 key)
 
     block64 result_e;
     block32 afterBox;
-    int count = 16;
-    for (int i = 0; i < 16; i++)
+    int count = SUBKEYS_LEN-1;
+    for (int i = 0; i < SUBKEYS_LEN-1; i++)
     {
         result_e.quadword = 0x0;
         result_e = e_bit_selection(r[i]);
@@ -780,68 +778,69 @@ block64 decryption(block64 encrypted, block64 key)
         r[i + 1].doubleWord = l[i].doubleWord ^ afterBox.doubleWord;
     }
     block64 afterInteration;
-    afterInteration.doubleWord._0 = r[16];
-    afterInteration.doubleWord._1 = l[16];
-    //afterInteration = ip_permutation_back(afterInteration);
+    afterInteration.doubleWord._0 = r[SUBKEYS_LEN-1];
+    afterInteration.doubleWord._1 = l[SUBKEYS_LEN-1];
+    afterInteration = ip_permutation_back(afterInteration);
 
     return afterInteration;
 }
 
+void write2file(block64 block)
+{
+    pthread_mutex_lock(&lock);
+    // FILE *fp_out = fopen(out_file, "ab");
+    fwrite(&block, 1, sizeof(&block), fp_out);
+    pthread_mutex_unlock(&lock);
+    // fclose(fp_out);
+}
+
 void thread_decryption(void *buf)
 {
-    block64 out;
-    block64 *in = (block64 *)buf;
-    out = *in;
-    out = decryption(out, key);
-    out = decryption(out, key);
-    out = decryption(out, key);
-    thread_write(out);
+    // block64 out;
+    block64 in = *((block64 *)buf);
+    // out = *in;
+    in = decryption(in, key);
+    in = decryption(in, key);
+    in = decryption(in, key);
+    write2file(in);
 }
 
 void thread_encryption(void *buf)
 {
-    block64 out;
-    block64 *in = (block64 *)buf;
-    out = *in;
-    out = encryption(out, key);
-    out = encryption(out, key);
-    out = encryption(out, key);
-    thread_write(out);
-}
-
-void thread_write(block64 block)
-{
-    pthread_mutex_lock(&lock);
-    FILE *fp = fopen(out_file, "ab");
-    fwrite(&block, 1, sizeof(&block), fp);
-    pthread_mutex_unlock(&lock);
-    fclose(fp);
+    // block64 out;
+    block64 in = *((block64 *)buf);
+    // out = *in;
+    in = encryption(in, key);
+    in = encryption(in, key);
+    in = encryption(in, key);
+    write2file(in);
 }
 
 void file_decryption()
 {
+    fp_out = fopen(out_file, "ab");
     FILE *fp;
     fp = fopen(in_file, "r");
 
     block64 buffer;
-    int threads = 1;
-    pthread_t *thread = calloc(threads, sizeof(pthread_t));
+    // int threads = 1;
+    // pthread_t *thread = calloc(threads, sizeof(pthread_t));
     buffer.quadword = 0x0;
 
     while (fread(&buffer, 1, sizeof(buffer), fp) > 0)
     {
-        pthread_create(&(thread[threads - 1]), NULL, (void *)thread_decryption, (void *)&buffer);
-        pthread_join(thread[threads - 1], NULL);
-        threads++;
-        thread = realloc(thread, threads * sizeof(pthread_t));
+        // pthread_create(&(thread[threads - 1]), NULL, (void *)thread_decryption, (void *)&buffer);
+        // pthread_join(thread[threads - 1], NULL);
+        // threads++;
+        // thread = realloc(thread, threads * sizeof(pthread_t));
+        thread_decryption((void *)&buffer);
     }
+    fclose(fp_out);
     fclose(fp);
 
     buffer = decryption(buffer, key);
     buffer = decryption(buffer, key);
     buffer = decryption(buffer, key);
-
-    printf("%ld \n", buffer);
 
     FILE *resize = fopen(out_file, "a+");
     struct stat st;
@@ -851,24 +850,22 @@ void file_decryption()
 
     fseek(resize, -fileSize, SEEK_END);
     if (ftruncate(fileno(resize), ftell(resize)) != 0)
-        perror("ftruncate() error");
+        perror("Error");
     else
     {
-        fstat(resize, &st);
-        printf("The file has %ld bytes\n", (long)st.st_size);
+        printf("Ok\n");
     }
     fclose(resize);
 }
 
 void file_encryption()
 {
-
-    FILE *fp;
-    fp = fopen(in_file, "r");
+    FILE *fp = fopen(in_file, "r");
+    fp_out = fopen(out_file, "ab");
 
     block64 buffer;
-    int threads = 1;
-    pthread_t *thread = calloc(threads, sizeof(pthread_t));
+    // int threads = 1;
+    // pthread_t *thread = calloc(threads, sizeof(pthread_t));
     buffer.quadword = 0x0;
 
     struct stat st;
@@ -877,44 +874,147 @@ void file_encryption()
 
     while (fread(&buffer, 1, sizeof(buffer), fp) > 0)
     {
-        pthread_create(&(thread[threads - 1]), NULL, (void *)thread_encryption, (void *)&buffer);
-        pthread_join(thread[threads - 1], NULL);
-        threads++;
-        thread = realloc(thread, threads * sizeof(pthread_t));
+        // pthread_create(&(thread[threads - 1]), NULL, (void *)thread_encryption, (void *)&buffer);
+        // pthread_join(thread[threads - 1], NULL);
+        // threads++;
+        // thread = realloc(thread, threads * sizeof(pthread_t));
+        thread_encryption((void *)&buffer);
     }
-
-    // pthread_exit(NULL);
-    // for (int i = 1; i < threads-1; i++)
-    // {
-    //     //
-    // }
 
     buffer.quadword = 0x0;
     buffer.quadword = fileSize;
-    pthread_create(&(thread[threads - 1]), NULL, (void *)thread_encryption, (void *)&buffer);
-    pthread_join(thread[threads - 1], NULL);
+    // pthread_create(&(thread[threads - 1]), NULL, (void *)thread_encryption, (void *)&buffer);
+    // pthread_join(thread[threads - 1], NULL);
+    thread_encryption((void *)&buffer);
     fclose(fp);
+    fclose(fp_out);
+}
+
+void usage()
+{
+
+    printf("\nUsage: [OPTION]... --key[PASS]  --if [FILE]... --of [FILE]... \n");
+    fputs(("Encryption or Decryption.\n"), stdout);
+
+    fputs("\n\
+  -k, --key             for file encryption\n\
+  -e, --encryption      for file encryption\n\
+  -d, --decryption      for file decryption\n\n\
+  -i, --if              input file\n\
+  -o, --of              output file\n\
+  -h, --help            show this help\n\n",
+          stdout);
+
+    exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
 {
-    in_file = "./saida";
-    out_file = "./saida1";
 
-    // int modo = ENCRYPT;
-    int modo = DECRYPT;
+    if (argc <= 1)
+    {
+        usage();
+        exit(EXIT_SUCCESS);
+    }
 
-    key.quadword = 0x133457799bbcdff1;
+    char pass[8];
+    int passLen = 0;
+    int modo = ENCRYPT;
+    int i = 0;
+
+    in_file = "./in.txt";
+    out_file = "./out.des";
+
+    key.quadword = 0x0;
+
+    int c;
+
+    while (1)
+    {
+        int option_index = 0;
+        static struct option long_options[] = {
+            {"key", required_argument, 0, 'k'},
+            {"encryption", no_argument, 0, 'e'},
+            {"decryption", no_argument, 0, 'd'},
+            {"if", required_argument, 0, 'i'},
+            {"of", required_argument, 0, 'o'},
+            {"help", no_argument, 0, 'h'},
+            {0, 0, 0, 0}};
+
+        c = getopt_long(argc, argv, "-edioh",
+                        long_options, &option_index);
+
+        if (c == -1)
+        {
+            break;
+        }
+
+        switch (c)
+        {
+        case 'k':
+            passLen = strlen(optarg) > 8 ? 8 : strlen(optarg);
+            printf("%u \n", passLen);
+
+            i = 0;
+            for (; i < passLen; i++)
+            {
+                pass[i] = optarg[i];
+            }
+            for (; i < 8; i++)
+            {
+                pass[i] = 'a';
+            }
+
+            key.byte._0 = pass[0];
+            key.byte._1 = pass[1];
+            key.byte._2 = pass[2];
+            key.byte._3 = pass[3];
+            key.byte._4 = pass[4];
+            key.byte._5 = pass[5];
+            key.byte._6 = pass[6];
+            key.byte._7 = pass[7];
+            break;
+
+        case 'e':
+            modo = ENCRYPT;
+            break;
+
+        case 'd':
+            modo = DECRYPT;
+            break;
+
+        case 'i':
+            printf("Entrada '%s'\n", optarg);
+            in_file = optarg;
+            break;
+
+        case 'o':
+            printf("Saida '%s'\n", optarg);
+            out_file = optarg;
+            break;
+
+        case 'h':
+            usage();
+            break;
+
+        default:
+            break;
+        }
+    }
+
     key_permutation(key, subkeys);
+
 
     if (modo == ENCRYPT)
     {
+        printf("Encryption\n");
         file_encryption();
     }
     else
     {
+        printf("Decryption\n");
         file_decryption();
     }
 
-    return 0;
+    exit(EXIT_SUCCESS);
 }

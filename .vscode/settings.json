@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "printf_block.h": "c",
-        "des.h": "c"
+        "des.h": "c",
+        "string.h": "c",
+        "stat.h": "c"
     }
 }
