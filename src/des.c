@@ -7,9 +7,9 @@ block64 key;
 
 char *in_file;
 char *out_file;
-block64 subkeys[16];
+block64 subkeys[17];
 
-static int bufferSize = 32768;
+// static int bufferSize = 32768;
 
 block32 permutationP(block32 in)
 {
@@ -223,7 +223,7 @@ void key_permutation(block64 key, block64 *key_permutated_final)
 {
     // printf_block32 pb32 = init_printf_block32();
 
-    block64 key_permutated[16];
+    block64 key_permutated[17];
     // block64 key_permutated_final[16];
 
     key_permutated[0].quadword = 0x0;
@@ -701,14 +701,12 @@ block64 e_bit_selection(block32 in)
 block64 encryption(block64 in, block64 key)
 {
     block64 ip;
-    
 
-    
     //ip = ip_permutation(in);
     ip = in;
 
-    block32 l[16];
-    block32 r[16];
+    block32 l[17];
+    block32 r[17];
 
     l[0] = ip.doubleWord._0;
     r[0] = ip.doubleWord._1;
@@ -749,8 +747,8 @@ block64 decryption(block64 encrypted, block64 key)
     block64 subkeys[16];
     key_permutation(key, subkeys);
 
-    block32 l[16];
-    block32 r[16];
+    block32 l[17];
+    block32 r[17];
 
     encrypted = ip_permutation_after_back(encrypted);
 
@@ -832,7 +830,7 @@ void file_decryption()
 
     while (fread(&buffer, 1, sizeof(buffer), fp) > 0)
     {
-        pthread_create(&(thread[threads - 1]), NULL, thread_decryption, (void *)&buffer);
+        pthread_create(&(thread[threads - 1]), NULL, (void *)thread_decryption, (void *)&buffer);
         pthread_join(thread[threads - 1], NULL);
         threads++;
         thread = realloc(thread, threads * sizeof(pthread_t));
@@ -843,21 +841,28 @@ void file_decryption()
     buffer = decryption(buffer, key);
     buffer = decryption(buffer, key);
 
-    printf("%u \n", buffer);
+    printf("%ld \n", buffer);
 
     FILE *resize = fopen(out_file, "a+");
     struct stat st;
     stat(out_file, &st);
     off_t fileSize = st.st_size;
     fileSize = fileSize - buffer.quadword;
-    fseek(fp, -fileSize, SEEK_END);
-    ftruncate(fileno(fp), ftell(fp));
-    fclose(fp);
+
+    fseek(resize, -fileSize, SEEK_END);
+    if (ftruncate(fileno(resize), ftell(resize)) != 0)
+        perror("ftruncate() error");
+    else
+    {
+        fstat(resize, &st);
+        printf("The file has %ld bytes\n", (long)st.st_size);
+    }
+    fclose(resize);
 }
 
 void file_encryption()
 {
-    
+
     FILE *fp;
     fp = fopen(in_file, "r");
 
@@ -872,13 +877,13 @@ void file_encryption()
 
     while (fread(&buffer, 1, sizeof(buffer), fp) > 0)
     {
-        pthread_create(&(thread[threads - 1]), NULL, thread_encryption, (void *)&buffer);
-        // pthread_join(thread[threads - 1], NULL);
+        pthread_create(&(thread[threads - 1]), NULL, (void *)thread_encryption, (void *)&buffer);
+        pthread_join(thread[threads - 1], NULL);
         threads++;
         thread = realloc(thread, threads * sizeof(pthread_t));
     }
 
-    pthread_exit(NULL);
+    // pthread_exit(NULL);
     // for (int i = 1; i < threads-1; i++)
     // {
     //     //
@@ -886,18 +891,18 @@ void file_encryption()
 
     buffer.quadword = 0x0;
     buffer.quadword = fileSize;
-    pthread_create(&(thread[threads - 1]), NULL, thread_encryption, (void *)&buffer);
+    pthread_create(&(thread[threads - 1]), NULL, (void *)thread_encryption, (void *)&buffer);
     pthread_join(thread[threads - 1], NULL);
     fclose(fp);
 }
 
 int main(int argc, char *argv[])
 {
-    in_file = "./de.zip";
-    out_file = "./e.zip";
+    in_file = "./saida";
+    out_file = "./saida1";
 
-    int modo = ENCRYPT;
-    // int modo = DECRYPT;
+    // int modo = ENCRYPT;
+    int modo = DECRYPT;
 
     key.quadword = 0x133457799bbcdff1;
     key_permutation(key, subkeys);
